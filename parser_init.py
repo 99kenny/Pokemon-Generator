@@ -1,0 +1,34 @@
+import argparse
+
+epochs=4
+lr=2e-5
+optim_type='AdamW'
+scheduler_type='get_linear_schedule_with_warmup'
+batch_size=16
+MODEL_NAME="runwayml/stable-diffusion-v1-5"
+OUTPUT_DIR="/output"
+HUB_MODEL_ID="pokemon-lora"
+DATASET_DIR="/dataset"
+
+def init_parser():
+    parser = argparse.ArgumentParser(description='Parsing Method')
+    
+    parser.add_argument('--training', action='store_true')
+    parser.add_argument('--inference', action='store_true')
+
+    parser.add_argument('--pretrained_model_name_or_path', type=str, default=MODEL_NAME)
+    parser.add_argument('--OUTPUT_DIR', type=str, default=OUTPUT_DIR)
+    parser.add_argument('--optim_type', default=optim_type, type=str)
+    parser.add_argument('--resolution', default=256, type=int)
+    parser.add_argument("--revision",type=str,default=None,help="Revision of pretrained model identifier from huggingface.co/models.",)
+
+    parser.add_argument('--epochs', default=epochs, type=int,
+                            help='epochs Default is 100')
+    parser.add_argument('--lr', default=lr, type=float,
+                            help='epochs Default is 0.1')
+
+    #-------- Additional argument! Need to be refactored ---------#
+
+    args = parser.parse_args()
+
+    return args
