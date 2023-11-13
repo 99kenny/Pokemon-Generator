@@ -21,12 +21,17 @@
 """Fine-tuning script for Stable Diffusion for text2image with support for LoRA."""
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F 
+
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from model import diffusion_model
+from diffusers import get_cosine_schedule_with_warmup
 from load_data import PokemonDataset
 from torchvision import transforms
+from tqdm import tqdm
 
 def train(args):
     model = diffusion_model(args)
@@ -45,6 +50,8 @@ def train(args):
     dataset = PokemonDataset(root_dir=args.dataset_dir, transform=train_transforms, Tokenizer= model.tokenizer) 
     train_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     
+
+    model.train()
     model.unet.requires_grad_(False)
     model.vae.requires_grad_(False)
     model.text_encoder.requires_grad_(False)
@@ -53,17 +60,34 @@ def train(args):
     
     weight_dtype = torch.float32
     model.to(device, dtype=weight_dtype)
-
+    loss_class = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(
+        model.lora_layers.parameters(),
+        lr=args.lr,
+        betas=(0.9, 0.999),
+        weight_decay=1e-2,
+        eps=1e-08,
+    )
+    scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps = 0,num_training_steps = len(train_dataloader) * args.epochs)
 
 
     for epoch in range(0,args.epochs):
         model.unet.train()
         train_loss = 0.0        
-        for step, batch in enumerate(train_dataloader):
+        for step, batch in enumerate(tqdm(train_dataloader)):
+            optimizer.zero_grad()
             pixel_values = batch["image"].to(device = device, dtype=weight_dtype)
             input_ids = batch['prompt'].to(device = device)
-            model_pred, target = model(pixel_values, input_ids)
-            break
-            loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
-        break
-        pass
+            model_pred, target, features_pred, logit_pred = model(pixel_values, input_ids)
+            # model_pred : latent_predicted by unet
+            # target : target_latent
+            # feature_pred : prediction for feature
+            # logit pred : class prediction
+            loss_latent = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+            loss_features = F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
+            loss_calss = loss_class(logit_pred, batch['p_type'].to(device = device))
+            loss = loss_latent + loss_features + loss_calss
+            loss.backward()
+            optimizer.step()
+        scheduler.step()
+        

@@ -4,7 +4,7 @@ from torch import nn
 from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import DDPMScheduler, AutoencoderKL, UNet2DConditionModel
 from diffusers.models.attention_processor import LoRAAttnProcessor
-
+from diffusers.loaders import AttnProcsLayers
 
 class diffusion_model(nn.Module):
     def __init__(self, args):
@@ -16,7 +16,8 @@ class diffusion_model(nn.Module):
         self.text_encoder = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
         self.noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
         self.regressor = nn.Linear(in_features=args.latent_dim, out_features=args.num_features, bias=True)
-        self.feature_extractor = nn.Sequential(nn.Linear(args.latent_dim, args.latent_dim // 2),nn.Linear(args.latent_dim//2, args.num_classes),nn.Softmax(dim=1))
+        self.classifier = nn.Sequential(nn.Linear(args.latent_dim, args.latent_dim // 2),nn.Linear(args.latent_dim//2, args.num_classes),nn.Softmax(dim=1))
+        self.lora_layers = None
 
     def set_lora (self, args):
         lora_attn_procs = {}
@@ -38,6 +39,7 @@ class diffusion_model(nn.Module):
             )
 
         self.unet.set_attn_processor(lora_attn_procs)    
+        self.lora_layers = AttnProcsLayers(self.unet.attn_processors)
 
 
     def forward(self, pixel_values, input_ids):
@@ -48,15 +50,13 @@ class diffusion_model(nn.Module):
         # Sample noise that we'll add to the latents
         noise = torch.randn_like(latents)
         bsz = latents.shape[0]
-        print(latents.shape)
         # Sample a random timestep for each image
         timesteps = torch.randint(0, self.noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
         timesteps = timesteps.long()
 
         noisy_latents = self.noise_scheduler.add_noise(latents, noise, timesteps)
-        
         encoder_hidden_states = self.text_encoder(input_ids)[0]
-
+        
         if self.noise_scheduler.config.prediction_type == "epsilon":
             target = noise
         elif self.noise_scheduler.config.prediction_type == "v_prediction":
@@ -65,7 +65,13 @@ class diffusion_model(nn.Module):
             raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
         
         model_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
-
-        return model_pred, target
+        flatten_latents = latents.reshape(latents.shape[0], -1)
+        feature_pred = self.regressor(flatten_latents)
+        logit_pred = self.classifier(flatten_latents)
+        return model_pred, target, feature_pred, logit_pred
+    
+    def inference(self, input_ids):
+        pass
+        
     
     

@@ -2,6 +2,7 @@ import os
 import random
 
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
 import pandas as pd
 from torchvision import transforms
@@ -43,9 +44,10 @@ class PokemonDataset(Dataset):
         image = self.images[idx]
         
         output = dict()
-        output['tabular'] = list(tabular)
+        output['tabular'] = torch.Tensor(list(tabular[1:])) # get rid of name of pokemon
         output['prompt'] = ','.join(random.sample(prompt.split(','), self.prompt_num))
         output['prompt'] = self.tokenize_captions(output['prompt'])
+        
         output['p_type'] = int(p_type)
         file_list = os.listdir(image)
         
