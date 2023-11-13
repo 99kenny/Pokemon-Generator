@@ -1,7 +1,7 @@
 import torch
 from torch import nn 
 
-from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
+from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import DDPMScheduler, AutoencoderKL, UNet2DConditionModel
 from diffusers.models.attention_processor import LoRAAttnProcessor
 
@@ -15,8 +15,8 @@ class diffusion_model(nn.Module):
         self.unet = UNet2DConditionModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision)
         self.text_encoder = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
         self.noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-        #self.regressor = nn.Linear(in_features=args.latent_dim, out_features=args.num_features, bias=True)
-        #self.feature_extractor = nn.Sequential(nn.Linear(args.latent_dim, args.latent_dim // 2),nn.Linear(args.latent_dim//2, args.num_classes),nn.Softmax(dim=1))
+        self.regressor = nn.Linear(in_features=args.latent_dim, out_features=args.num_features, bias=True)
+        self.feature_extractor = nn.Sequential(nn.Linear(args.latent_dim, args.latent_dim // 2),nn.Linear(args.latent_dim//2, args.num_classes),nn.Softmax(dim=1))
 
     def set_lora (self, args):
         lora_attn_procs = {}
@@ -48,7 +48,7 @@ class diffusion_model(nn.Module):
         # Sample noise that we'll add to the latents
         noise = torch.randn_like(latents)
         bsz = latents.shape[0]
-
+        print(latents.shape)
         # Sample a random timestep for each image
         timesteps = torch.randint(0, self.noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
         timesteps = timesteps.long()

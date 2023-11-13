@@ -9,8 +9,7 @@ from torchvision import transforms
 class PokemonDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, image_num=1, prompt_num=20, transform=None, Tokenizer = None):
-        self.image_num = image_num
+    def __init__(self, root_dir, prompt_num=20, transform=None, Tokenizer = None):
         self.prompt_num = prompt_num
         self.root_dir = root_dir
         self.transform = transform
@@ -42,21 +41,20 @@ class PokemonDataset(Dataset):
         p_type = self.p_type.iloc[idx]
         prompt = self.prompts.iloc[idx]
         image = self.images[idx]
-        sampled_img = random.sample(list(range(0,5)), self.image_num)
         
         output = dict()
         output['tabular'] = list(tabular)
         output['prompt'] = ','.join(random.sample(prompt.split(','), self.prompt_num))
         output['prompt'] = self.tokenize_captions(output['prompt'])
         output['p_type'] = int(p_type)
-        output['image'] = []
-        for index, file in enumerate(os.listdir(image)):
-            if index in sampled_img:
-                file_path = os.path.join(image,file)
-                print(file_path)
-                img = Image.open(file_path)
-                img = self.transform(img)
-                output['image'].append(img)
+        file_list = os.listdir(image)
+        
+        # random image in image dir
+        image_idx = random.randint(0,len(file_list)-1)
+        file_path = os.path.join(image,file_list[image_idx])
+        img = Image.open(file_path).convert('RGB')
+        img = self.transform(img)
+        output['image'] = img
         return output
     
     

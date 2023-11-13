@@ -20,6 +20,7 @@ def init_parser():
 
     parser.add_argument('--pretrained_model_name_or_path', type=str, default=MODEL_NAME)
     parser.add_argument('--rank', default=4, type=int)
+    parser.add_argument('--latent_dim', default=4096, type=int)
 
     parser.add_argument('--optim_type', default=optim_type, type=str)
     parser.add_argument('--resolution', default=256, type=int)
