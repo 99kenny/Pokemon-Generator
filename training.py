@@ -1,18 +1,28 @@
-from model import diffusion_model
 import torch.functional as F 
+from torch.utils.data import DataLoader
 
-def tokenize_captions(captions,tokenizer,  is_train=True, ):
-    captions = []
-    inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt")
+from model import diffusion_model
+from load_data import PokemonDataset
+from torchvision import transforms
 
-    return inputs.input_ids
+
 
 def train(args):
     model = diffusion_model(args)
-    print(model)
+    
 
     # Data loader
-    train_dataloader = None
+    train_transforms = transforms.Compose(
+        [
+            transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.CenterCrop(args.resolution),
+            transforms.RandomHorizontalFlip(), #if args.random_flip else transforms.Lambda(lambda x: x),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ]
+    )
+    dataset = PokemonDataset(root_dir=args.dataset_dir, transform=train_transforms, Tokenizer= model.tokenizer) 
+    train_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     
     model.unet.requires_grad_(False)
     model.vae.requires_grad_(False)
@@ -20,6 +30,12 @@ def train(args):
 
     model.set_lora(args)
     for step, batch in enumerate(train_dataloader):
+        
+        print(type(batch['image']))
+        print(batch['prompt'].shape)
+        print(batch['p_type'].shape)
+        print(batch['tabular'].shape)
+        break
         #get_data
         pixel_values = None
         input_ids = None
