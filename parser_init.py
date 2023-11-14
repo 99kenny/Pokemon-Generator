@@ -27,7 +27,7 @@ def init_parser():
 
     parser.add_argument('--pretrained_model_name_or_path', type=str, default=MODEL_NAME)
     parser.add_argument('--rank', default=4, type=int)
-    parser.add_argument('--latent_dim', default=4096, type=int)
+    parser.add_argument('--hidden_dim', default=768, type=int)
     parser.add_argument('--num_features', default = NUM_FEATURES, type= int)
     parser.add_argument('--num_classes' ,default=NUM_CLASSES, type=int)
     parser.add_argument("--revision",type=str,default=None,help="Revision of pretrained model identifier from huggingface.co/models.",)

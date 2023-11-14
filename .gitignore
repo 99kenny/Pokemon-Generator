@@ -1,3 +1,7 @@
 /dataset
 /__pycache__
 *.pt
+/wandb
+*.log
+*.wandb
+*.log

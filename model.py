@@ -15,8 +15,8 @@ class diffusion_model(nn.Module):
         self.unet = UNet2DConditionModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision)
         self.text_encoder = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
         self.noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-        self.regressor = nn.Linear(in_features=args.latent_dim, out_features=args.num_features, bias=True)
-        self.classifier = nn.Sequential(nn.Linear(args.latent_dim, args.latent_dim // 2),nn.Linear(args.latent_dim//2, args.num_classes),nn.Softmax(dim=1))
+        self.regressor = nn.Linear(in_features=args.hidden_dim, out_features=args.num_features, bias=True)
+        self.classifier = nn.Sequential(nn.Linear(args.hidden_dim, args.hidden_dim // 2),nn.Linear(args.hidden_dim//2, args.num_classes),nn.Softmax(dim=1))
         self.lora_layers = None
 
     def set_lora (self, args):
@@ -65,9 +65,9 @@ class diffusion_model(nn.Module):
             raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
         
         model_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
-        flatten_latents = latents.reshape(latents.shape[0], -1)
-        feature_pred = self.regressor(flatten_latents)
-        logit_pred = self.classifier(flatten_latents)
+        flatten_hidden_states = encoder_hidden_states[:,0,:].reshape(latents.shape[0], -1)
+        feature_pred = self.regressor(flatten_hidden_states)
+        logit_pred = self.classifier(flatten_hidden_states)
         return model_pred, target, feature_pred, logit_pred
     
     def inference(self, input_ids):

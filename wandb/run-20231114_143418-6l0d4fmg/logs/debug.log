@@ -64,3 +64,4 @@ config: {}
 2023-11-14 14:34:19,833 INFO    MainThread:24712 [wandb_run.py:_config_callback():1342] config_cb alpha_1 0.0001 None
 2023-11-14 14:34:19,833 INFO    MainThread:24712 [wandb_config.py:__setitem__():151] config set alpha_2 = 0.1 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x00000209BE959670>>
 2023-11-14 14:34:19,833 INFO    MainThread:24712 [wandb_run.py:_config_callback():1342] config_cb alpha_2 0.1 None
+2023-11-14 17:38:44,856 WARNING MsgRouterThr:24712 [router.py:message_loop():77] message_loop has been closed
