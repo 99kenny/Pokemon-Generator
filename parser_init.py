@@ -1,12 +1,15 @@
 import argparse
+import os
+from datetime import datetime
 
-epochs=4
+epochs=100
 lr=1e-04
 optim_type='AdamW'
 scheduler_type='get_linear_schedule_with_warmup'
 BATCH_SIZE=16
 MODEL_NAME="runwayml/stable-diffusion-v1-5"
-OUTPUT_DIR="/output"
+MODEL_DIR="output/models/"+'2023-11-14 14 32 02.pt'
+MODEL_SAVE_DIR = "output/models/"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
 HUB_MODEL_ID="pokemon-lora"
 DATASET_DIR="dataset"
 NUM_FEATURES = 6
@@ -15,9 +18,12 @@ def init_parser():
     parser = argparse.ArgumentParser(description='Parsing Method')
     
     parser.add_argument('--training', action='store_true')
+    parser.add_argument('--testing', action='store_true')
     parser.add_argument('--inference', action='store_true')
-    parser.add_argument('--output_dir', type=str, default=OUTPUT_DIR)
+    parser.add_argument('--model_dir', type=str, default=MODEL_DIR)
+    parser.add_argument('--model_save_dir', type=str, default=MODEL_SAVE_DIR)
     parser.add_argument('--dataset_dir', type=str, default=DATASET_DIR)
+    parser.add_argument('--wandb', type=bool, default=True)
 
     parser.add_argument('--pretrained_model_name_or_path', type=str, default=MODEL_NAME)
     parser.add_argument('--rank', default=4, type=int)
@@ -35,6 +41,8 @@ def init_parser():
     parser.add_argument('--lr', default=lr, type=float,
                             help='epochs Default is 0.1')
     parser.add_argument('--batch_size', default=BATCH_SIZE, )
+    parser.add_argument('--alpha_1', default=0.0001, type=float)
+    parser.add_argument('--alpha_2', default=0.1, type=float)
 
     #-------- Additional argument! Need to be refactored ---------#
 

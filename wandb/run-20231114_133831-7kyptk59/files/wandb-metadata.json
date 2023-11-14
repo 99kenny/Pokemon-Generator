@@ -1,0 +1,55 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.8.18",
+    "heartbeatAt": "2023-11-14T04:38:32.347099",
+    "startedAt": "2023-11-14T04:38:31.374211",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--training"
+    ],
+    "state": "running",
+    "program": "main.py",
+    "codePathLocal": "main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "https://github.com/99kenny/Pokemon-Generator.git",
+        "commit": "2459fe0ab2b805c6e7360c37b77a1c2ab3a78b61"
+    },
+    "email": "hynciath51@gmail.com",
+    "root": "C:/Users/pc03/Documents/GitHub/Pokemon-Generator",
+    "host": "DESKTOP-ECLNFHK",
+    "username": "PC44",
+    "executable": "C:\\Users\\pc03\\anaconda3\\envs\\pokemon\\python.exe",
+    "cpu_count": 16,
+    "cpu_count_logical": 24,
+    "cpu_freq": {
+        "current": 3200.0,
+        "min": 0.0,
+        "max": 3200.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3200.0,
+            "min": 0.0,
+            "max": 3200.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 475.82323837280273,
+            "used": 308.3154411315918
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3060",
+            "memory_total": 12884901888
+        }
+    ],
+    "memory": {
+        "total": 31.682418823242188
+    }
+}

@@ -71,6 +71,7 @@ class diffusion_model(nn.Module):
         return model_pred, target, feature_pred, logit_pred
     
     def inference(self, input_ids):
+        
         pass
         
     
