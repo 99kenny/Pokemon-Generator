@@ -33,12 +33,13 @@ from load_data import PokemonDataset
 from torchvision import transforms
 from tqdm import tqdm
 import wandb
+import logging
 
 
 def train(args):
     model = diffusion_model(args)
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-    print(f'device : {device}')
+    logging.info(f'device : {device}')
     
     # Data loader
     train_transforms = transforms.Compose(
@@ -50,7 +51,7 @@ def train(args):
             transforms.Normalize([0.5], [0.5]),
         ]
     )
-    dataset = PokemonDataset(root_dir=args.dataset_dir, transform=train_transforms, Tokenizer= model.tokenizer) 
+    dataset = PokemonDataset(root_dir=args.dataset_dir, args = args, transform=train_transforms, Tokenizer= model.tokenizer) 
     train_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     
 
@@ -76,8 +77,9 @@ def train(args):
     BEST_LOSS = 100000
 
     for epoch in range(0,args.epochs):
-        model.unet.train()
-        train_loss = 0.0        
+        logging.info(f'epoch : {epoch} / {args.epochs}')
+        train_loss = 0.0   
+             
         for step, batch in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
             pixel_values = batch["image"].to(device = device, dtype=weight_dtype)
@@ -88,18 +90,17 @@ def train(args):
             # feature_pred : prediction for feature
             # logit pred : class prediction
             loss_latent = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
-            loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
-            loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
+            loss_features = args.alpha_1*F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
+            loss_class = args.alpha_2* criterion(logit_pred, batch['p_type'].to(device = device))
             loss = loss_latent + loss_features + loss_class
             loss.backward()
             train_loss += loss.item()
             optimizer.step()
             wandb.log({'loss_latent_batch': loss_latent.item(), 'loss_features_batch' : loss_features.item(), 'loss_class_batch' : loss_class.item(), 'loss_batch' : loss.item()})
             
-        print(train_loss / len(train_dataloader))
+        logging.info(train_loss / len(train_dataloader))
         wandb.log({'train_loss_epoch': train_loss / len(train_dataloader)})
         if BEST_LOSS > train_loss / len(train_dataloader):
-            print('yes')
             BEST_LOSS = train_loss / len(train_dataloader)
             model_dict = {'lora' :model.lora_layers.state_dict(), 'classifier' : model.classifier.state_dict(), 'regressor' : model.regressor.state_dict()}
             torch.save(model_dict, args.model_save_dir)

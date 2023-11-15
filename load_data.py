@@ -6,15 +6,17 @@ import torch
 from torch.utils.data import Dataset
 import pandas as pd
 from torchvision import transforms
+from utils import norm
 
 class PokemonDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, prompt_num=20, transform=None, Tokenizer = None):
+    def __init__(self, args, root_dir, prompt_num=20, transform=None, Tokenizer = None):
         self.prompt_num = prompt_num
         self.root_dir = root_dir
         self.transform = transform
         self.Tokenizer = Tokenizer
+        self.args = args
 
         self.tabular = pd.read_csv(f'{root_dir}/pokemon_preprocessed.csv')
         self.p_type = self.tabular['type1'].astype('category').cat.codes
@@ -44,7 +46,7 @@ class PokemonDataset(Dataset):
         image = self.images[idx]
         
         output = dict()
-        output['tabular'] = torch.Tensor(list(tabular[1:])) # get rid of name of pokemon
+        output['tabular'] = torch.Tensor(norm(list(tabular[1:]),self.args)) # get rid of name of pokemon
         output['prompt'] = ','.join(random.sample(prompt.split(','), self.prompt_num))
         output['prompt'] = self.tokenize_captions(output['prompt'])
         

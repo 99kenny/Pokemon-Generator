@@ -6,7 +6,7 @@ from testing import test
 from utils import store_config
 import wandb
 from datetime import datetime
-
+import logging
 
 now = datetime.now()
 
