@@ -2,11 +2,11 @@ import argparse
 import os
 from datetime import datetime
 
-epochs=100
-lr=1e-05
+epochs=1000
+lr=1e-01
 optim_type='AdamW'
 scheduler_type='get_linear_schedule_with_warmup'
-BATCH_SIZE=16
+BATCH_SIZE=128
 MODEL_NAME="runwayml/stable-diffusion-v1-5"
 MODEL_DIR="output/models/"+'2023-11-14 14 32 02.pt'
 MODEL_SAVE_DIR = "output/models/"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
@@ -44,7 +44,7 @@ def init_parser():
 
 
     parser.add_argument('--optim_type', default=optim_type, type=str)
-    parser.add_argument('--resolution', default=256, type=int)
+    parser.add_argument('--resolution', default=64, type=int)
 
     parser.add_argument('--epochs', default=epochs, type=int,
                             help='epochs Default is 100')

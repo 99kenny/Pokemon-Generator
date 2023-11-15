@@ -37,6 +37,13 @@ import logging
 
 
 def train(args):
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
     model = diffusion_model(args)
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     logging.info(f'device : {device}')
@@ -77,7 +84,7 @@ def train(args):
     BEST_LOSS = 100000
 
     for epoch in range(0,args.epochs):
-        logging.info(f'epoch : {epoch} / {args.epochs}')
+        logger.info(f'epoch : {epoch} / {args.epochs}')
         train_loss = 0.0   
              
         for step, batch in enumerate(tqdm(train_dataloader)):
@@ -98,7 +105,7 @@ def train(args):
             optimizer.step()
             wandb.log({'loss_latent_batch': loss_latent.item(), 'loss_features_batch' : loss_features.item(), 'loss_class_batch' : loss_class.item(), 'loss_batch' : loss.item()})
             
-        logging.info(train_loss / len(train_dataloader))
+        logger.info(train_loss / len(train_dataloader))
         wandb.log({'train_loss_epoch': train_loss / len(train_dataloader)})
         if BEST_LOSS > train_loss / len(train_dataloader):
             BEST_LOSS = train_loss / len(train_dataloader)

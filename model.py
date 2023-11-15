@@ -65,7 +65,7 @@ class diffusion_model(nn.Module):
             raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
         
         model_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
-        flatten_hidden_states = encoder_hidden_states[:,0,:].reshape(latents.shape[0], -1)
+        flatten_hidden_states = encoder_hidden_states[:,2,:].reshape(latents.shape[0], -1)
         feature_pred = self.regressor(flatten_hidden_states)
         logit_pred = self.classifier(flatten_hidden_states)
         return model_pred, target, feature_pred, logit_pred

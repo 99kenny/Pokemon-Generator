@@ -34,7 +34,7 @@ class PokemonDataset(Dataset):
             self.images.append(file_path) 
         
     def tokenize_captions(self, captions,is_train=True):
-        inputs = self.Tokenizer(captions, max_length=self.Tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt")
+        inputs = self.Tokenizer('[cls]' + captions, max_length=self.Tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt")
         return inputs.input_ids
     def __len__(self):
         return len(self.images)
