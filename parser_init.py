@@ -6,19 +6,19 @@ epochs=100
 lr=1e-04
 optim_type='AdamW'
 scheduler_type='get_linear_schedule_with_warmup'
-BATCH_SIZE=16
+BATCH_SIZE=64
 MODEL_NAME="xyn-ai/anything-v4.0"
-MODEL_DIR="output/models/"+'2023-11-27 09 34 06.pt'
+MODEL_DIR="output/models/"+'2023-12-03 16 53 51.pt'
 MODEL_SAVE_DIR = "output/models/"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
 HUB_MODEL_ID="pokemon-lora"
 DATASET_DIR="dataset"
 NUM_FEATURES = 6
 NUM_CLASSES = 18
 
-#INPUT_PROMPT = "detailed,'Electric-type', 'Pixelated', 'Code-covered fur', 'Exhausted expression', 'Coffee cup accessory', 'Keyboard tail', 'Bug-resistant', 'Analytical mindset', 'Scripting abilities', 'Debugging prowess'".replace("'","")
-#INPUT_PROMPT = "stone, Plumber-type, Mushroom-shaped hat, Overalls attire, Moustache accessory, Jumping ability, Coin-collecting instinct, Pipe-traveler, Power-up transformations".replace("'","")
+#INPUT_PROMPT = "'Electric-type', 'Pixelated', 'Code-covered fur', 'Exhausted expression', 'Coffee cup accessory', 'Keyboard tail', 'Bug-resistant', 'Analytical mindset', 'Scripting abilities', 'Debugging prowess'".replace("'","")
+INPUT_PROMPT = "Plumber-type, Mushroom-shaped hat, Overalls attire, Moustache accessory, Jumping ability, Coin-collecting instinct, Pipe-traveler, Power-up transformations".replace("'","")
 #INPUT_PROMPT = "'Ancient stone guardian', 'Massive mountain of strength', 'Rocky fortress with a heart of stone', 'Mysterious rock with hidden power', 'Unyielding protector of ancient ruins', 'Solemn figure sculpted from solid stone', 'Legendary golem of immense power', 'Eternal sentinel of the rocks', 'Embodiment of ancient earth energy', 'Invincible golem carved by time', 'Imposing presence amidst rocky terrain', 'Remnant of a forgotten era', 'Unbreakable guardian of secrets', 'Majestic stone colossus', 'Resolute in the face of adversity', 'Bearing the weight of time', 'Silent observer of eternal stillness', 'Symbol of resilience and endurance', 'Crystallized legend of untold tales', 'Unwavering pillar amid chaos'"
-INPUT_PROMPT = "stone, normal type"
+#INPUT_PROMPT = "stone, normal type"
 MEAN_AND_STD = [(61.30230769230769, 109.40440153641276),
                 (1.162948717948718, 1.0806972609827687),
                 (77.67179487179487, 32.238440514989),

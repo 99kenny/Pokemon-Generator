@@ -65,7 +65,7 @@ def train(args):
     
     model.unet.requires_grad_(False)
     model.vae.requires_grad_(False)
-    model.text_encoder.requires_grad_(False)
+    model.text_encoder.requires_grad_(True)
     model.set_lora(args)
     model.train()
 
@@ -89,20 +89,28 @@ def train(args):
         loss_latent = 0      
         for step, batch in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
-            pixel_values = batch["image"].to(device = device, dtype=weight_dtype)
-            input_ids = batch['prompt'].to(device = device)
-            model_pred, target, features_pred, logit_pred = model(pixel_values, input_ids,args)
-            # model_pred : latent_predicted by unet
-            # target : target_latent
-            # feature_pred : prediction for feature
-            # logit pred : class prediction
-            
-            loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
-            loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
-            loss =  loss_features + loss_class
-            if args.image_gen :
+            if not args.image_gen :
+                input_ids = batch['prompt'].to(device = device)
+                _, _, features_pred, logit_pred = model(None, input_ids , image_gen = args.image_gen)
+                loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
+                loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
+                loss =  loss_features + loss_class
+            else :
+
+                pixel_values = batch["image"].to(device = device, dtype=weight_dtype)
+                input_ids = batch['prompt'].to(device = device)
+                model_pred, target, features_pred, logit_pred = model(pixel_values, input_ids)
+                # model_pred : latent_predicted by unet
+                # target : target_latent
+                # feature_pred : prediction for feature
+                # logit pred : class prediction
+                
+                loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
+                loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
+                loss = loss_features + loss_class
                 loss_latent = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
                 loss += loss_latent
+
             loss.backward()
             train_loss += loss.item()
             optimizer.step()
@@ -121,10 +129,3 @@ def train(args):
         scheduler.step()
     
     
-    random_pixel_values = torch.randn((1, 3, args.resolution, args.resolution)).to(device = device)
-    inference_prompt = args.inference_prompt
-    input_ids = model.tokenizer('[cls]' + inference_prompt, max_length=model.tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids.to(device)
-    image = model.inference(random_pixel_values, input_ids, args)
-    now = str(datetime.now())[:-7].replace(':', ' ')
-    save_image(image,f'output/image/inference_img_{now}.jpg')
-    print(image.shape)

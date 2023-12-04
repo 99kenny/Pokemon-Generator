@@ -42,7 +42,13 @@ class diffusion_model(nn.Module):
         self.lora_layers = AttnProcsLayers(self.unet.attn_processors)
 
 
-    def forward(self, pixel_values, input_ids):
+    def forward(self, pixel_values, input_ids, image_gen = True):
+        if not image_gen:
+            encoder_hidden_states = self.text_encoder(input_ids)[0]
+            flatten_hidden_states = encoder_hidden_states[:,0,:].reshape(input_ids.shape[0], -1)
+            feature_pred = self.regressor(flatten_hidden_states)
+            logit_pred = self.classifier(flatten_hidden_states)
+            return None, None, feature_pred, logit_pred
         # Convert images to latent space
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         latents = latents * self.vae.config.scaling_factor
@@ -65,14 +71,17 @@ class diffusion_model(nn.Module):
             raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
         
         model_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
-        flatten_hidden_states = encoder_hidden_states[:,2,:].reshape(latents.shape[0], -1)
+        flatten_hidden_states = encoder_hidden_states[:,0,:].reshape(latents.shape[0], -1)
         feature_pred = self.regressor(flatten_hidden_states)
         logit_pred = self.classifier(flatten_hidden_states)
         return model_pred, target, feature_pred, logit_pred
     
     def inference(self, input_ids):
-        
-        pass
+        encoder_hidden_states = self.text_encoder(input_ids)[0]
+        flatten_hidden_states = encoder_hidden_states[:,0,:].reshape(input_ids.shape[0], -1)
+        feature_pred = self.regressor(flatten_hidden_states)
+        logit_pred = self.classifier(flatten_hidden_states)
+        return feature_pred, logit_pred
         
     
     

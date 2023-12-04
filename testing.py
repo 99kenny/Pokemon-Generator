@@ -1,5 +1,7 @@
 
+from load_data import PokemonDataset
 from model import diffusion_model
+from torch.utils.data import DataLoader
 from utils import model_load, unnorm
 import torch
 from torchvision.utils import save_image
@@ -7,6 +9,10 @@ from datetime import datetime
 import pandas as pd
 import torch
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+from torchvision import transforms
+from tqdm import tqdm
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 PTYPE_CATEGORY = {0: 'bug',
                 1: 'dark',
@@ -30,7 +36,7 @@ PTYPE_CATEGORY = {0: 'bug',
 NEGATIVE_PROMPTS = "out of frame, extra fingers, mutated hands, monochrome, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, glitchy, bokeh, ((flat chested)), ((((visible hand)))), ((((ugly)))), (((duplicate))), ((morbid)), ((mutilated)), [out of frame], extra fingers, mutated hands, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), (((disfigured))), out of frame, ugly, (bad anatomy), gross proportions, (malformed limbs), (((extra legs))), mutated hands, (fused fingers), (too many fingers), multiple subjects, extra heads"
 
 def test(args):
-    inference_prompt = '<cls>, high resolution, masterpiece, best quality' + args.inference_prompt +', in style of pokemon,'# Focus and Sharpness: Make sure the image is focused and sharp and encourages the viewer to see it as a work of art printed on fabric.'
+    inference_prompt = 'high resolution, masterpiece, best quality, ' + args.inference_prompt +', in style of pokemon,'# Focus and Sharpness: Make sure the image is focused and sharp and encourages the viewer to see it as a work of art printed on fabric.'
     if args.image_gen :
         model_base = args.pretrained_model_name_or_path
         pipe = StableDiffusionPipeline.from_pretrained(model_base, torch_dtype=torch.float16)
@@ -43,14 +49,58 @@ def test(args):
             if output.nsfw_content_detected[0] == False :
                 image = output.images[0]
                 image.save(f'output/image/inference_img_{now}_{i}.jpg')
-    
-    model = diffusion_model(args)
+
+    # Data loader
+    train_transforms = transforms.Compose(
+        [
+            transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.CenterCrop(args.resolution),
+            transforms.RandomHorizontalFlip(), #if args.random_flip else transforms.Lambda(lambda x: x),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ]
+    )
+    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+    model = diffusion_model(args).to(device=device)
     model.set_lora(args)
     model = model_load(model, args)
     model.eval()
-    inputs_ids = model.tokenizer(inference_prompt, max_length=model.tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids
+    
+    dataset = PokemonDataset(root_dir=args.dataset_dir, args = args, transform=train_transforms, Tokenizer= model.tokenizer) 
+    train_dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+    scaler = dataset.scaler
+
+    print(inference_prompt)
+    inputs_ids = model.tokenizer(inference_prompt, max_length=model.tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids.to(device = device)
+
+    print(inputs_ids)
     feature_pred, logit_pred = model.inference(input_ids=inputs_ids)
-    unnormed_feature = unnorm(feature_pred[0], args)
-    for key, value in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], unnormed_feature):
-        print(f'{key} \t:  {(value)}')
+    unnormed_feature = scaler.inverse_transform(feature_pred[0].detach().cpu().numpy().reshape(1, -1))
     print(PTYPE_CATEGORY[int(torch.argmax(logit_pred[0]))])
+
+    for key, value in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], unnormed_feature[0]):
+        print(f'{key} \t:  {(value)}')
+
+    prediction_tabular = []
+    target_tabular = []
+    prediction_class = []
+    target_class = []
+    for step, batch in enumerate(tqdm(train_dataloader)):
+        if not args.image_gen :
+            input_ids = batch['prompt'][0].to(device = device)
+            tabular = scaler.inverse_transform(batch['tabular'])
+            feature_pred, logit_pred = model.inference(input_ids=input_ids)
+            unnormed_feature = scaler.inverse_transform(feature_pred[0].detach().cpu().numpy().reshape(1, -1))
+            pred = {}
+            prediction_tabular.append(unnormed_feature[0])
+            prediction_class.append(int(torch.argmax(logit_pred)))
+            trg = {}
+            target_tabular.append(tabular[0])
+            target_class.append(batch['p_type'])
+    assert len(prediction_tabular) == len(target_tabular)
+    print(np.array(prediction_tabular).T)
+    result = {}
+    for key, value1, value2 in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], np.array(prediction_tabular).T, np.array(target_tabular).T):
+        result[key] = mean_squared_error(value1, value2)**0.5
+    
+    print(result)
