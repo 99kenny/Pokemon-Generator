@@ -6,9 +6,9 @@ epochs=100
 lr=1e-04
 optim_type='AdamW'
 scheduler_type='get_linear_schedule_with_warmup'
-BATCH_SIZE=64
+BATCH_SIZE=128
 MODEL_NAME="xyn-ai/anything-v4.0"
-MODEL_DIR="output/models/"+'2023-12-03 16 53 51.pt'
+MODEL_DIR="output/models/"+'2023-12-04 11 45 34.pt'
 MODEL_SAVE_DIR = "output/models/"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
 HUB_MODEL_ID="pokemon-lora"
 DATASET_DIR="dataset"
@@ -61,8 +61,8 @@ def init_parser():
     parser.add_argument('--lr', default=lr, type=float,
                             help='epochs Default is 0.1')
     parser.add_argument('--batch_size', default=BATCH_SIZE, )
-    parser.add_argument('--alpha_1', default=0.1, type=float)
-    parser.add_argument('--alpha_2', default=0.1, type=float)
+    parser.add_argument('--alpha_1', default=1, type=float)
+    parser.add_argument('--alpha_2', default=1, type=float)
 
     #-------- Additional argument! Need to be refactored ---------#
 

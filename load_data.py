@@ -9,6 +9,28 @@ from torchvision import transforms
 from utils import norm
 from sklearn.preprocessing import RobustScaler
 
+ptype_dict_str_int = {'bug': 0,
+    'dark': 1,
+    'dragon': 2,
+    'electric': 3,
+    'fairy': 4,
+    'fighting': 5,
+    'fire': 6,
+    'flying': 7,
+    'ghost': 8,
+    'grass': 9,
+    'ground': 10,
+    'ice': 11,
+    'normal': 12,
+    'poison': 13,
+    'psychic': 14,
+    'rock': 15,
+    'steel': 16,
+    'water': 17}
+
+def category(name):
+    return ptype_dict_str_int[name]
+
 class PokemonDataset(Dataset):
     """Face Landmarks dataset."""
 
@@ -20,7 +42,7 @@ class PokemonDataset(Dataset):
         self.args = args
 
         self.tabular = pd.read_csv(f'{root_dir}/pokemon_preprocessed.csv')
-        self.p_type = self.tabular['type1'].astype('category').cat.codes
+        self.p_type = self.tabular['type1'].apply(category)
         self.tabular = self.tabular.drop(['type1','name'], axis=1)
         self.scaler = RobustScaler().fit(self.tabular)
         self.tabular = self.scaler.transform(self.tabular)

@@ -73,10 +73,8 @@ def test(args):
     print(inference_prompt)
     inputs_ids = model.tokenizer(inference_prompt, max_length=model.tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids.to(device = device)
 
-    print(inputs_ids)
     feature_pred, logit_pred = model.inference(input_ids=inputs_ids)
     unnormed_feature = scaler.inverse_transform(feature_pred[0].detach().cpu().numpy().reshape(1, -1))
-    print(PTYPE_CATEGORY[int(torch.argmax(logit_pred[0]))])
 
     for key, value in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], unnormed_feature[0]):
         print(f'{key} \t:  {(value)}')
@@ -98,9 +96,11 @@ def test(args):
             target_tabular.append(tabular[0])
             target_class.append(batch['p_type'])
     assert len(prediction_tabular) == len(target_tabular)
-    print(np.array(prediction_tabular).T)
     result = {}
     for key, value1, value2 in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], np.array(prediction_tabular).T, np.array(target_tabular).T):
         result[key] = mean_squared_error(value1, value2)**0.5
     
-    print(result)
+    
+    acc = [i for i,j in zip(prediction_class, target_class) if i == j]
+    print(prediction_class)
+    print(f'Pokemon_type_Acc : \n {len((acc)) / len(prediction_class)}')
