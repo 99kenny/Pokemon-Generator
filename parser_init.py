@@ -6,10 +6,10 @@ epochs=100
 lr=1e-04
 optim_type='AdamW'
 scheduler_type='get_linear_schedule_with_warmup'
-BATCH_SIZE=128
+BATCH_SIZE=16
 MODEL_NAME="xyn-ai/anything-v4.0"
-MODEL_DIR="output/models/"+'2023-12-04 11 45 34.pt'
-MODEL_SAVE_DIR = "output/models/"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
+MODEL_DIR="output/models/"+'2023-11-27 09 34 06.pt'
+MODEL_SAVE_DIR = "output/models/"+ "with_out_focal_loss"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
 HUB_MODEL_ID="pokemon-lora"
 DATASET_DIR="dataset"
 NUM_FEATURES = 6
@@ -19,12 +19,6 @@ NUM_CLASSES = 18
 INPUT_PROMPT = "Plumber-type, Mushroom-shaped hat, Overalls attire, Moustache accessory, Jumping ability, Coin-collecting instinct, Pipe-traveler, Power-up transformations".replace("'","")
 #INPUT_PROMPT = "'Ancient stone guardian', 'Massive mountain of strength', 'Rocky fortress with a heart of stone', 'Mysterious rock with hidden power', 'Unyielding protector of ancient ruins', 'Solemn figure sculpted from solid stone', 'Legendary golem of immense power', 'Eternal sentinel of the rocks', 'Embodiment of ancient earth energy', 'Invincible golem carved by time', 'Imposing presence amidst rocky terrain', 'Remnant of a forgotten era', 'Unbreakable guardian of secrets', 'Majestic stone colossus', 'Resolute in the face of adversity', 'Bearing the weight of time', 'Silent observer of eternal stillness', 'Symbol of resilience and endurance', 'Crystallized legend of untold tales', 'Unwavering pillar amid chaos'"
 #INPUT_PROMPT = "stone, normal type"
-MEAN_AND_STD = [(61.30230769230769, 109.40440153641276),
-                (1.162948717948718, 1.0806972609827687),
-                (77.67179487179487, 32.238440514989),
-                (72.97435897435898, 30.81568643397852),
-                (71.6025641025641, 32.19370916773384),
-                (70.98717948717949, 28.01365593534274)]
 
 
 def init_parser():
@@ -42,7 +36,7 @@ def init_parser():
     parser.add_argument('--dataset_dir', type=str, default=DATASET_DIR)
     parser.add_argument('--wandb', type=bool, default=True)
     parser.add_argument('--mean_std', type=list, default=MEAN_AND_STD)
-    parser.add_argument('--image_gen', type=bool, default=False)
+    parser.add_argument('--image_gen', type=bool, default=True)
 
 
     parser.add_argument('--pretrained_model_name_or_path', type=str, default=MODEL_NAME)

@@ -41,25 +41,34 @@ class PokemonDataset(Dataset):
         self.Tokenizer = Tokenizer
         self.args = args
 
-        self.tabular = pd.read_csv(f'{root_dir}/pokemon_preprocessed.csv')
+        self.tabular = pd.read_csv(f'{root_dir}/pokemon_preprocessed.csv').sort_values(by='name').reset_index(drop=True)
         self.p_type = self.tabular['type1'].apply(category)
+        self.names = self.tabular['name']
         self.tabular = self.tabular.drop(['type1','name'], axis=1)
         self.scaler = RobustScaler().fit(self.tabular)
         self.tabular = self.scaler.transform(self.tabular)
-        self.prompts = pd.read_csv(f'{root_dir}/pokemon_prompts.csv')
+        self.prompts = pd.read_csv(f'{root_dir}/pokemon_prompts.csv').sort_values(by='name').reset_index(drop=True)
+        
+        assert len(self.names.compare(self.prompts['name'])) == 0
+
         self.prompts = self.prompts['prompts'].str.replace("'","").str.replace('[','').str.replace(']','')
+
+        
 
         image_dir = os.path.join(root_dir, 'images')
         self.images = []
-        for folder in os.listdir(image_dir):
+        for folder in self.names:
             file_path = os.path.join(image_dir,folder)
             if len(file_path) == 0:
                 raise ValueError
             self.images.append(file_path) 
         
+        
+        
     def tokenize_captions(self, captions,is_train=True):
         inputs = self.Tokenizer('<|startoftext|>, high resolution, masterpiece, best quality, ' + captions, max_length=self.Tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt")
         return inputs.input_ids
+    
     def __len__(self):
         return len(self.tabular)
 
@@ -73,7 +82,6 @@ class PokemonDataset(Dataset):
         output['tabular'] = torch.Tensor(tabular) #  get rid of name of pokemon
         output['prompt'] = ','.join(random.sample(prompt.split(','), self.prompt_num))
         output['prompt'] = self.tokenize_captions(output['prompt'])
-        
         output['p_type'] = int(p_type)
        
         
@@ -88,16 +96,4 @@ class PokemonDataset(Dataset):
         
         return output
     
-    
-        
-'''
-if __name__ == '__main__':
-    dataset = PokemonDataset(root_dir='C:/Users/pc03/Desktop/lora/dataset') 
-    out = dataset.__getitem__(0)
-    print(out['tabular'])
-    print(out['prompt'])
-    print(out['p_type'])
-    print(out['image'])
-    
-'''
-
+   

@@ -11,6 +11,10 @@ def model_load(model, args):
     model.classifier.load_state_dict(checkpoint['classifier'])
     return model
     
+def focal_loss(pred, target, args):
+    pass
+
+
 def norm(values, args):
     normed_values = []
     for value, (m, std) in zip(values, args.mean_std):
