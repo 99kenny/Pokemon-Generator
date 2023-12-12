@@ -33,19 +33,14 @@ from load_data import PokemonDataset
 from torchvision import transforms
 from tqdm import tqdm
 import wandb
-import logging
 from torchvision.utils import save_image
 from datetime import datetime
+from utils import FocalLoss, get_logger
 
 
 def train(args):
+    logger = get_logger()
 
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
     model = diffusion_model(args)
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     logging.info(f'device : {device}')
@@ -71,7 +66,10 @@ def train(args):
 
     weight_dtype = torch.float32
     model.to(device, dtype=weight_dtype)
-    criterion = nn.CrossEntropyLoss()
+    if args.cls_loss == 'FocalLoss':
+        criterion = FocalLoss()
+    else:
+        criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=args.lr,
@@ -116,7 +114,7 @@ def train(args):
             optimizer.step()
             wandb.log({'loss_features_batch' : loss_features.item(), 'loss_class_batch' : loss_class.item(), 'loss_batch' : loss.item()})
             if args.image_gen :
-                wandb.log({'loss_latent_batch': loss_latent.item()})
+                wandb.log({'loss_latent_batch': loss_latent.item(),  'custom_step' : epoch})
             
         logger.info(train_loss / len(train_dataloader))
         wandb.log({'train_loss_epoch': train_loss / len(train_dataloader)})

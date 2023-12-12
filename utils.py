@@ -1,5 +1,7 @@
 import wandb
 import torch
+import torch.nn as nn
+import logging
 
 def store_config(args, wandb):
     for key in vars(args).keys():
@@ -11,20 +13,30 @@ def model_load(model, args):
     model.classifier.load_state_dict(checkpoint['classifier'])
     return model
     
-def focal_loss(pred, target, args):
-    pass
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2, logits=False, reduce=True):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.logits = logits
+        self.reduce = reduce
 
+    def forward(self, inputs, targets):
+        ce_loss = nn.CrossEntropyLoss()(inputs, targets, reduction='none')
 
-def norm(values, args):
-    normed_values = []
-    for value, (m, std) in zip(values, args.mean_std):
-        normed_values.append((value - m) / std)
+        pt = torch.exp(-ce_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * ce_loss
 
-    return normed_values
-
-def unnorm(values, args):
-    unnormed_values = []
-    for value, (m, std) in zip(values, args.mean_std):
-        unnormed_values.append((value *std) + m)
-
-    return unnormed_values
+        if self.reduce:
+            return torch.mean(F_loss)
+        else:
+            return F_loss
+        
+def get_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    return logger

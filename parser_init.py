@@ -35,7 +35,6 @@ def init_parser():
     parser.add_argument('--output_dir', default='output/pokemon')
     parser.add_argument('--dataset_dir', type=str, default=DATASET_DIR)
     parser.add_argument('--wandb', type=bool, default=True)
-    parser.add_argument('--mean_std', type=list, default=MEAN_AND_STD)
     parser.add_argument('--image_gen', type=bool, default=True)
 
 
@@ -46,7 +45,7 @@ def init_parser():
     parser.add_argument('--num_classes' ,default=NUM_CLASSES, type=int)
     parser.add_argument("--revision",type=str,default=None,help="Revision of pretrained model identifier from huggingface.co/models.",)
 
-
+    parser.add_argument('--cls_loss', default='CELoss', type = str)
     parser.add_argument('--optim_type', default=optim_type, type=str)
     parser.add_argument('--resolution', default=256, type=int)
 
