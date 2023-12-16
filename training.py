@@ -43,7 +43,7 @@ def train(args):
 
     model = diffusion_model(args)
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-    logging.info(f'device : {device}')
+    logger.info(f'device : {device}')
     
     # Data loader
     train_transforms = transforms.Compose(
@@ -80,47 +80,38 @@ def train(args):
     scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps = 0,num_training_steps = len(train_dataloader) * args.epochs)
 
     BEST_LOSS = 100000
-
+    logger.info(f'{criterion}')
     for epoch in range(0,args.epochs):
         logger.info(f'epoch : {epoch} / {args.epochs}')
         train_loss = 0.0  
         loss_latent = 0      
         for step, batch in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
-            if not args.image_gen :
-                input_ids = batch['prompt'].to(device = device)
-                _, _, features_pred, logit_pred = model(None, input_ids , image_gen = args.image_gen)
-                loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
-                loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
-                loss =  loss_features + loss_class
-            else :
-
-                pixel_values = batch["image"].to(device = device, dtype=weight_dtype)
-                input_ids = batch['prompt'].to(device = device)
-                model_pred, target, features_pred, logit_pred = model(pixel_values, input_ids)
-                # model_pred : latent_predicted by unet
-                # target : target_latent
-                # feature_pred : prediction for feature
-                # logit pred : class prediction
-                
-                loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
-                loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
-                loss = loss_features + loss_class
-                loss_latent = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
-                loss += loss_latent
+            pixel_values = batch["image"].to(device = device, dtype=weight_dtype)
+            input_ids = batch['prompt'].to(device = device)
+            model_pred, target, features_pred= model(pixel_values, input_ids)
+            # model_pred : latent_predicted by unet
+            # target : target_latent
+            # feature_pred : prediction for feature
+            # logit pred : class prediction
+            
+            loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
+            #loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
+            loss_latent = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+            loss = loss_latent + loss_features
 
             loss.backward()
             train_loss += loss.item()
             optimizer.step()
-            wandb.log({'loss_features_batch' : loss_features.item(), 'loss_class_batch' : loss_class.item(), 'loss_batch' : loss.item()})
+            wandb.log({'loss_features_batch' : loss_features.item(),'loss_batch' : loss.item(), 'custom_step' : epoch})
             if args.image_gen :
-                wandb.log({'loss_latent_batch': loss_latent.item(),  'custom_step' : epoch})
+                wandb.log({'loss_latent_batch': loss_latent.item()})
             
         logger.info(train_loss / len(train_dataloader))
         wandb.log({'train_loss_epoch': train_loss / len(train_dataloader)})
         if BEST_LOSS > train_loss / len(train_dataloader):
             BEST_LOSS = train_loss / len(train_dataloader)
-            model_dict = {'classifier' : model.classifier.state_dict(), 'regressor' : model.regressor.state_dict()}
+            model_dict = {'regressor' : model.regressor.state_dict(), 'text_encoder' : model.text_encoder.state_dict()}
             torch.save(model_dict, args.model_save_dir)
             if args.image_gen :
                 model.unet.save_attn_procs(args.output_dir)

@@ -10,11 +10,11 @@ def store_config(args, wandb):
 def model_load(model, args):
     checkpoint = torch.load(args.model_dir)
     model.regressor.load_state_dict(checkpoint['regressor'])
-    model.classifier.load_state_dict(checkpoint['classifier'])
+    model.text_encoder.load_state_dict(checkpoint['text_encoder'])
     return model
     
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=1, gamma=2, logits=False, reduce=True):
+    def __init__(self, alpha=0.25, gamma=4, logits=False, reduce=True):
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
@@ -22,7 +22,7 @@ class FocalLoss(nn.Module):
         self.reduce = reduce
 
     def forward(self, inputs, targets):
-        ce_loss = nn.CrossEntropyLoss()(inputs, targets, reduction='none')
+        ce_loss = nn.CrossEntropyLoss(reduction='none')(inputs, targets)
 
         pt = torch.exp(-ce_loss)
         F_loss = self.alpha * (1-pt)**self.gamma * ce_loss
