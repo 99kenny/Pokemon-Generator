@@ -1,0 +1,6 @@
+I want 20 prompts for [name_of_pokemon].
+prompts must not involve '[name_of_pokemon]' or names of any pokemon. 
+prompts can be anything that description about how it looks like and acts.
+
+For example : 
+[keyword1, keyword2, ... , keyword20]
