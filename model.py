@@ -15,7 +15,8 @@ class diffusion_model(nn.Module):
         self.unet = UNet2DConditionModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision)
         self.text_encoder = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
         self.noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-        self.regressor = nn.Linear(in_features=args.hidden_dim, out_features=args.num_features, bias=True)
+        self.regressor = nn.Sequential(nn.Linear(in_features=args.hidden_dim, out_features=args.hidden_dim, bias=True),nn.Linear(in_features=args.hidden_dim, out_features=args.num_features, bias=True))
+        #self.classifier = nn.Sequential(nn.Linear(args.hidden_dim, args.num_classes),nn.Softmax(dim=1))
         self.lora_layers = None
 
     def set_lora (self, args):

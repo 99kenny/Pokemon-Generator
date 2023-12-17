@@ -43,19 +43,19 @@ def test(args):
     model = model_load(model, args)
     model.eval()
 
-    if args.image_gen :
-        model_base = args.pretrained_model_name_or_path
-        pipe = StableDiffusionPipeline.from_pretrained(model_base, torch_dtype=torch.float16)
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-        pipe.unet.load_attn_procs('output\pokemon\pytorch_lora_weights.safetensors')
-        pipe.text_encoder.load_state_dict(torch.load(args.model_dir)[''])
-        pipe.to("cuda")
-        now = str(datetime.now())[:-7].replace(':', ' ')
-        for i in range(10):
-            output = pipe(inference_prompt, negative_prompt=NEGATIVE_PROMPTS, num_inference_steps=100, height = args.resolution, width = args.resolution)
-            if output.nsfw_content_detected[0] == False :
-                image = output.images[0]
-                image.save(f'output/image/inference_img_{now}_{i}.jpg')
+
+    model_base = args.pretrained_model_name_or_path
+    pipe = StableDiffusionPipeline.from_pretrained(model_base, torch_dtype=torch.float16)
+    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    pipe.unet.load_attn_procs('output\pokemon\pytorch_lora_weights.safetensors')
+    pipe.text_encoder.load_state_dict(torch.load(args.model_dir)[''])
+    pipe.to("cuda")
+    now = str(datetime.now())[:-7].replace(':', ' ')
+    for i in range(10):
+        output = pipe(inference_prompt, negative_prompt=NEGATIVE_PROMPTS, num_inference_steps=100, height = args.resolution, width = args.resolution)
+        if output.nsfw_content_detected[0] == False :
+            image = output.images[0]
+            image.save(f'output/image/inference_img_{now}_{i}.jpg')
 
     # Data loader
     train_transforms = transforms.Compose(
@@ -76,7 +76,7 @@ def test(args):
     print(inference_prompt)
     inputs_ids = model.tokenizer(inference_prompt, max_length=model.tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids.to(device = device)
 
-    feature_pred, logit_pred = model.inference(input_ids=inputs_ids)
+    feature_pred = model.inference(input_ids=inputs_ids)
     unnormed_feature = scaler.inverse_transform(feature_pred[0].detach().cpu().numpy().reshape(1, -1))
 
     for key, value in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], unnormed_feature[0]):
@@ -88,7 +88,7 @@ def test(args):
     for step, batch in enumerate(tqdm(train_dataloader)):
         input_ids = batch['prompt'][0].to(device = device)
         tabular = scaler.inverse_transform(batch['tabular'])
-        feature_pred, logit_pred = model.inference(input_ids=input_ids)
+        feature_pred = model.inference(input_ids=input_ids)
         unnormed_feature = scaler.inverse_transform(feature_pred[0].detach().cpu().numpy().reshape(1, -1))
         prediction_tabular.append(unnormed_feature[0])
         target_tabular.append(tabular[0])
@@ -99,5 +99,5 @@ def test(args):
     
     mse_error = np.mean(np.sqrt((np.array(target_tabular) - np.array(prediction_tabular)) ** 2), axis=0)
     for key, value in zip(['weight_kg','height_m','attack','defense','sp_attack','sp_defense'], mse_error):
-        print(f'{key} \t:  {round(value,2)}')
+        print(f'{key} \t:  {round(value,3)}')
     

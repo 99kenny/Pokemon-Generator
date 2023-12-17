@@ -60,16 +60,12 @@ def train(args):
     
     model.unet.requires_grad_(False)
     model.vae.requires_grad_(False)
-    model.text_encoder.requires_grad_(True)
+    model.text_encoder.requires_grad_(False)
     model.set_lora(args)
     model.train()
 
     weight_dtype = torch.float32
     model.to(device, dtype=weight_dtype)
-    if args.cls_loss == 'FocalLoss':
-        criterion = FocalLoss()
-    else:
-        criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=args.lr,
@@ -80,7 +76,6 @@ def train(args):
     scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps = 0,num_training_steps = len(train_dataloader) * args.epochs)
 
     BEST_LOSS = 100000
-    logger.info(f'{criterion}')
     for epoch in range(0,args.epochs):
         logger.info(f'epoch : {epoch} / {args.epochs}')
         train_loss = 0.0  
@@ -93,7 +88,6 @@ def train(args):
             # model_pred : latent_predicted by unet
             # target : target_latent
             # feature_pred : prediction for feature
-            # logit pred : class prediction
             
             loss_features = args.alpha_1 * F.mse_loss(features_pred.float(), batch['tabular'].to(device = device), reduction="mean")
             #loss_class = args.alpha_2 * criterion(logit_pred, batch['p_type'].to(device = device))
@@ -103,9 +97,7 @@ def train(args):
             loss.backward()
             train_loss += loss.item()
             optimizer.step()
-            wandb.log({'loss_features_batch' : loss_features.item(),'loss_batch' : loss.item(), 'custom_step' : epoch})
-            if args.image_gen :
-                wandb.log({'loss_latent_batch': loss_latent.item()})
+            wandb.log({'loss_features_batch' : loss_features.item(),'loss_batch' : loss.item(), 'loss_latent_batch': loss_latent.item(), 'custom_step' : epoch})
             
         logger.info(train_loss / len(train_dataloader))
         wandb.log({'train_loss_epoch': train_loss / len(train_dataloader)})

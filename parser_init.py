@@ -2,14 +2,14 @@ import argparse
 import os
 from datetime import datetime
 
-epochs=100
-lr=1e-03
+epochs=20
+lr=1e-04
 optim_type='AdamW'
 scheduler_type='get_linear_schedule_with_warmup'
 BATCH_SIZE=16
 MODEL_NAME="xyn-ai/anything-v4.0"
-MODEL_DIR="output/models/"+'2023-11-27 09 34 06.pt'
-MODEL_SAVE_DIR = "output/models/"+ "focal_loss"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
+MODEL_DIR="output/models/"+'with_outlier2023-12-16 20 42 55.pt'
+MODEL_SAVE_DIR = "output/models/"+ "with_outlier"+ str(datetime.now())[:-7].replace(':', ' ') + '.pt'
 HUB_MODEL_ID="pokemon-lora"
 DATASET_DIR="dataset"
 NUM_FEATURES = 6
@@ -36,17 +36,15 @@ def init_parser():
     parser.add_argument('--output_dir', default='output/pokemon')
     parser.add_argument('--dataset_dir', type=str, default=DATASET_DIR)
     parser.add_argument('--wandb', type=bool, default=True)
-    parser.add_argument('--image_gen', type=bool, default=False)
+    parser.add_argument('--image_gen', type=bool, default=True)
 
 
     parser.add_argument('--pretrained_model_name_or_path', type=str, default=MODEL_NAME)
     parser.add_argument('--rank', default=4, type=int)
     parser.add_argument('--hidden_dim', default=768, type=int)
     parser.add_argument('--num_features', default = NUM_FEATURES, type= int)
-    #parser.add_argument('--num_classes' ,default=NUM_CLASSES, type=int)
     parser.add_argument("--revision",type=str,default=None,help="Revision of pretrained model identifier from huggingface.co/models.",)
 
-    parser.add_argument('--cls_loss', default='CELoss', type = str)
     parser.add_argument('--optim_type', default=optim_type, type=str)
     parser.add_argument('--resolution', default=256, type=int)
 
@@ -56,7 +54,6 @@ def init_parser():
                             help='epochs Default is 0.1')
     parser.add_argument('--batch_size', default=BATCH_SIZE, )
     parser.add_argument('--alpha_1', default=0.1, type=float)
-    #parser.add_argument('--alpha_2', default=0.01, type=float)
 
     #-------- Additional argument! Need to be refactored ---------#
 

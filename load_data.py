@@ -18,7 +18,7 @@ class PokemonDataset(Dataset):
         self.Tokenizer = Tokenizer
         self.args = args
 
-        self.tabular = pd.read_csv(f'{root_dir}/pokemon_preprocessed_without_outliers.csv').sort_values(by='name').reset_index(drop=True)
+        self.tabular = pd.read_csv(f'{root_dir}/pokemon_preprocessed.csv').sort_values(by='name').reset_index(drop=True)
         self.names = self.tabular['name']
         self.tabular = self.tabular.drop(['type1','name'], axis=1)
         self.scaler = RobustScaler().fit(self.tabular)
