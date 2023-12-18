@@ -1,9 +1,10 @@
 /dataset
 /__pycache__
+/output
 *.pt
 /wandb
 *.log
 *.wandb
 *.log
-*.png
-*.jpg
+
+
