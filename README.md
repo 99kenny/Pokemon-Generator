@@ -12,9 +12,6 @@ This project aims to implement a model that generates new Pokemon images and tab
 - LoRA (Language-Image Integration)
 - Addressing Class Imbalance
 
-## Keywords
-Data Construction, Data Processing, Multimodal, Prompt Engineering, LoRA, Class Imbalance
-
 ## Libraries Used
 - PyTorch
 - Pandas
