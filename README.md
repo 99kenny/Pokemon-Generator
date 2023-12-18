@@ -1,6 +1,6 @@
 # Pokemon Generator
 
-![Pokemon Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/250px-International_Pok%C3%A9mon_logo.svg.png)
+![Project Head Image](Result\HEAD_IMAGE.png)
 
 This project aims to implement a model that generates new Pokemon images and tabular data based on a given text prompt. It utilizes data from Kaggle's "The Complete Pokemon Dataset" (Link: [Kaggle Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)) and additional collected data.
 
