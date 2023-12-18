@@ -1,1 +1,0 @@
-{"loss_latent_batch": 0.07069279253482819, "loss_features_batch": 1.7730600833892822, "loss_class_batch": 0.2900048494338989, "loss_batch": 2.1337575912475586, "_timestamp": 1699935049.177523, "_runtime": 219.34424591064453, "_step": 23, "_wandb": {"runtime": 225}}
